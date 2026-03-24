@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yaw/Pitch/Roll Gimbal Visualization</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+</head>
+<body>
+    <h1>Yaw/Pitch/Roll Gimbal Visualization</h1>
+    <h3>Adapted from <a href="http://www.ctralie.com">Chris Tralie's</a> original implementation</h3>
+    <p>Using standard Yaw-Pitch-Roll convention: R<sub>Z</sub>(α) R<sub>Y</sub>(β) R<sub>X</sub>(γ)</p>
+
+    <table class="main-layout">
+        <tr>
+            <td>
+                <div id="canvas-container">
+                    <canvas id="MainGLCanvas" width="650" height="600"></canvas>
+                </div>
+                <table class="slider-table">
+                    <tr>
+                        <td class="yaw-label"><b>Yaw (α)</b></td>
+                        <td><input type="range" id="yawSlider" min="0" max="1000" value="0" step="1"></td>
+                        <td><input type="text" id="yawTxt" size="4"></td>
+                        <td><button type="button" id="yawButton" onclick="callYawSet()">SET</button></td>
+                    </tr>
+                    <tr>
+                        <td class="pitch-label"><b>Pitch (β)</b></td>
+                        <td><input type="range" id="pitchSlider" min="0" max="1000" value="0" step="1"></td>
+                        <td><input type="text" id="pitchTxt" size="4"></td>
+                        <td><button type="button" id="pitchButton" onclick="callPitchSet()">SET</button></td>
+                    </tr>
+                    <tr>
+                        <td class="roll-label"><b>Roll (γ)</b></td>
+                        <td><input type="range" id="rollSlider" min="0" max="1000" value="0" step="1"></td>
+                        <td><input type="text" id="rollTxt" size="4"></td>
+                        <td><button type="button" id="rollButton" onclick="callRollSet()">SET</button></td>
+                    </tr>
+                </table>
+            </td>
+            <td class="side-panel">
+                <h1>Matrix Representation</h1>
+                
+                <table class="matrix-layout">
+                    <tr>
+                        <td><h3>\[ R_Z(\alpha) \]</h3></td>
+                        <td><h3>\[ R_Y(\beta) \]</h3></td>
+                        <td><h3>\[ R_X(\gamma) \]</h3></td>
+                        <td></td>
+                        <td><h3>\[ R_Z(\alpha) R_Y(\beta) R_X(\gamma) \]</h3></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <!-- R_Z(α) matrix -->
+                            <table class="matrix">
+                                <tr>
+                                    <td class="matrix" id="calpha1"></td>
+                                    <td class="matrix" id="salphaneg"></td>
+                                    <td class="matrix">0</td>
+                                </tr>
+                                <tr>
+                                    <td class="matrix" id="salphapos"></td>
+                                    <td class="matrix" id="calpha2"></td>
+                                    <td class="matrix">0</td>
+                                </tr>
+                                <tr>
+                                    <td class="matrix">0</td>
+                                    <td class="matrix">0</td>
+                                    <td class="matrix">1</td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <!-- R_Y(β) matrix -->
+                            <table class="matrix">
+                                <tr>
+                                    <td class="matrix" id="cbeta1"></td>
+                                    <td class="matrix">0</td>
+                                    <td class="matrix" id="sbetapos"></td>
+                                </tr>
+                                <tr>
+                                    <td class="matrix">0</td>
+                                    <td class="matrix">1</td>
+                                    <td class="matrix">0</td>
+                                </tr>
+                                <tr>
+                                    <td class="matrix" id="sbetaneg"></td>
+                                    <td class="matrix">0</td>
+                                    <td class="matrix" id="cbeta2"></td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <!-- R_X(γ) matrix -->
+                            <table class="matrix">
+                                <tr>
+                                    <td class="matrix">1</td>
+                                    <td class="matrix">0</td>
+                                    <td class="matrix">0</td>
+                                </tr>
+                                <tr>
+                                    <td class="matrix">0</td>
+                                    <td class="matrix" id="cgamma1"></td>
+                                    <td class="matrix" id="sgammaneg"></td>
+                                </tr>
+                                <tr>
+                                    <td class="matrix">0</td>
+                                    <td class="matrix" id="sgammapos"></td>
+                                    <td class="matrix" id="cgamma2"></td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td><h1>\[ = \]</h1></td>
+                        <td>
+                            <!-- Combined rotation matrix -->
+                            <table class="matrix">
+                                <tr>
+                                    <td class="col1" id="r00"></td>
+                                    <td class="col2" id="r01"></td>
+                                    <td class="col3" id="r02"></td>
+                                </tr>
+                                <tr>
+                                    <td class="col1" id="r10"></td>
+                                    <td class="col2" id="r11"></td>
+                                    <td class="col3" id="r12"></td>
+                                </tr>
+                                <tr>
+                                    <td class="col1" id="r20"></td>
+                                    <td class="col2" id="r21"></td>
+                                    <td class="col3" id="r22"></td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+
+                <p>
+                    <b>NOTE:</b> This uses the standard aerospace Yaw-Pitch-Roll convention 
+                    (Tait-Bryan angles Z-Y'-X''), equivalent to the first row of the Tait-Bryan angles table
+                    at <a href="https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix">this link</a>
+                </p>
+
+                <h1>Animation Menu</h1>
+                <table>
+                    <tr><td>Display Plane</td><td><input type="checkbox" id="displayPlaneCheckbox" checked></td></tr>
+                    <tr><td>Display Gimbals</td><td><input type="checkbox" id="displayGimbalsCheckbox" checked></td></tr>
+                    <tr><td>Display Axes</td><td><input type="checkbox" id="displayAxesCheckbox" checked></td></tr>
+                </table>
+
+                <table border="1" class="orientation-table">
+                    <tr>
+                        <td></td>
+                        <td>Yaw (α)</td>
+                        <td>Pitch (β)</td>
+                        <td>Roll (γ)</td>
+                    </tr>
+                    <tr>
+                        <td>Orientation 1<br><button type="button" onclick="callOrientation1SetCurrent()">SET FROM CURRENT</button></td>
+                        <td><input type="text" id="yaw1" size="4"></td>
+                        <td><input type="text" id="pitch1" size="4"></td>
+                        <td><input type="text" id="roll1" size="4"></td>
+                    </tr>
+                    <tr>
+                        <td>Orientation 2<br><button type="button" onclick="callOrientation2SetCurrent()">SET FROM CURRENT</button></td>
+                        <td><input type="text" id="yaw2" size="4"></td>
+                        <td><input type="text" id="pitch2" size="4"></td>
+                        <td><input type="text" id="roll2" size="4"></td>
+                    </tr>
+                </table>
+
+                <table>
+                    <tr>
+                        <td>
+                            <input type="radio" id="lerpButton" name="animationType" value="lerp" checked>
+                            <label for="lerpButton">Roll/Pitch/Yaw LERP</label>
+                            <br>
+                            <input type="radio" id="slerpButton" name="animationType" value="slerp">
+                            <label for="slerpButton">Quaternion SLERP</label>
+                        </td>
+                        <td>
+                            <button type="button" id="animateButton" onclick="doAnimation()">ANIMATE</button>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <hr>
+
+    <h3>Directions</h3>
+    <ul>
+        <li>Manipulate the sliders to change yaw/pitch/roll. It is also possible to input your own angles and hit the "set" button to update them</li>
+        <li>For an animation which does linear interpolation between two sets of these angles, choose an initial yaw/pitch/roll next to "orientation1" in the animation menu to the right, as well as a final orientation next to "orientation 2." You can also automatically fill in the angles corresponding to the current slider positions by clicking "set from current."</li>
+        <li>Click the "animate" button to perform linear interpolation between orientation 1 and orientation 2</li>
+        <li>Click the "display gimbals" checkbox to toggle displaying of the gimbals. This may make it easier to view the animation</li>
+        <li>To view the gimbals from a different point of view, left click and drag your mouse. To zoom, scroll wheel. To translate, right click and drag</li>
+    </ul>
+
+    <h3>Rotation Convention Change</h3>
+    <p>
+        <b>Original:</b> R<sub>Y</sub>(α) R<sub>X</sub>(β) R<sub>Z</sub>(γ) — Yaw around Y, Pitch around X, Roll around Z<br>
+        <b>New:</b> R<sub>Z</sub>(α) R<sub>Y</sub>(β) R<sub>X</sub>(γ) — Yaw around Z (vertical), Pitch around Y (lateral), Roll around X (forward)
+    </p>
+    <p>This is the standard aerospace yaw-pitch-roll convention using intrinsic Z-Y'-X'' Tait-Bryan angles.</p>
+
+    <script src="script.js"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>
