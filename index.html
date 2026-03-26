@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yaw/Pitch/Roll Gimbal Visualization</title>
+    <title>MAE345 Yaw/Pitch/Roll Gimbal Visualization</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
 </head>
 <body>
-    <h1>Yaw/Pitch/Roll Gimbal Visualization</h1>
-    <h3>Adapted from <a href="http://www.ctralie.com">Chris Tralie's</a> original implementation</h3>
-    <p>Using standard Yaw-Pitch-Roll convention: R<sub>Z</sub>(α) R<sub>Y</sub>(β) R<sub>X</sub>(γ)</p>
+    <h1>MAE345: 3-2-1 Euler Angles Visualization</h1>
+    <h3>Yaw-Pitch-Roll Gimbal Demo</h3>
+    <p>Using standard 3-2-1 Euler angle convention: R<sub>3</sub>(ψ) R<sub>2</sub>(θ) R<sub>1</sub>(φ)</p>
 
     <table class="main-layout">
         <tr>
@@ -22,19 +22,19 @@
                 </div>
                 <table class="slider-table">
                     <tr>
-                        <td class="yaw-label"><b>Yaw (α)</b></td>
+                        <td class="yaw-label"><b>Yaw (ψ)</b></td>
                         <td><input type="range" id="yawSlider" min="0" max="1000" value="0" step="1"></td>
                         <td><input type="text" id="yawTxt" size="4"></td>
                         <td><button type="button" id="yawButton" onclick="callYawSet()">SET</button></td>
                     </tr>
                     <tr>
-                        <td class="pitch-label"><b>Pitch (β)</b></td>
+                        <td class="pitch-label"><b>Pitch (θ)</b></td>
                         <td><input type="range" id="pitchSlider" min="0" max="1000" value="0" step="1"></td>
                         <td><input type="text" id="pitchTxt" size="4"></td>
                         <td><button type="button" id="pitchButton" onclick="callPitchSet()">SET</button></td>
                     </tr>
                     <tr>
-                        <td class="roll-label"><b>Roll (γ)</b></td>
+                        <td class="roll-label"><b>Roll (φ)</b></td>
                         <td><input type="range" id="rollSlider" min="0" max="1000" value="0" step="1"></td>
                         <td><input type="text" id="rollTxt" size="4"></td>
                         <td><button type="button" id="rollButton" onclick="callRollSet()">SET</button></td>
@@ -46,24 +46,24 @@
                 
                 <table class="matrix-layout">
                     <tr>
-                        <td><h3>\[ R_Z(\alpha) \]</h3></td>
-                        <td><h3>\[ R_Y(\beta) \]</h3></td>
-                        <td><h3>\[ R_X(\gamma) \]</h3></td>
+                        <td><h3>\[ R_3(\psi) \]</h3></td>
+                        <td><h3>\[ R_2(\theta) \]</h3></td>
+                        <td><h3>\[ R_1(\phi) \]</h3></td>
                         <td></td>
-                        <td><h3>\[ R_Z(\alpha) R_Y(\beta) R_X(\gamma) \]</h3></td>
+                        <td><h3>\[ R_3(\psi) R_2(\theta) R_1(\phi) \]</h3></td>
                     </tr>
                     <tr>
                         <td>
-                            <!-- R_Z(α) matrix -->
+                            <!-- R_3(ψ) matrix - Yaw -->
                             <table class="matrix">
                                 <tr>
-                                    <td class="matrix" id="calpha1"></td>
-                                    <td class="matrix" id="salphaneg"></td>
+                                    <td class="matrix" id="cpsi1"></td>
+                                    <td class="matrix" id="spsineg"></td>
                                     <td class="matrix">0</td>
                                 </tr>
                                 <tr>
-                                    <td class="matrix" id="salphapos"></td>
-                                    <td class="matrix" id="calpha2"></td>
+                                    <td class="matrix" id="spsipos"></td>
+                                    <td class="matrix" id="cpsi2"></td>
                                     <td class="matrix">0</td>
                                 </tr>
                                 <tr>
@@ -74,12 +74,12 @@
                             </table>
                         </td>
                         <td>
-                            <!-- R_Y(β) matrix -->
+                            <!-- R_2(θ) matrix - Pitch -->
                             <table class="matrix">
                                 <tr>
-                                    <td class="matrix" id="cbeta1"></td>
+                                    <td class="matrix" id="ctheta1"></td>
                                     <td class="matrix">0</td>
-                                    <td class="matrix" id="sbetapos"></td>
+                                    <td class="matrix" id="sthetapos"></td>
                                 </tr>
                                 <tr>
                                     <td class="matrix">0</td>
@@ -87,14 +87,14 @@
                                     <td class="matrix">0</td>
                                 </tr>
                                 <tr>
-                                    <td class="matrix" id="sbetaneg"></td>
+                                    <td class="matrix" id="sthetaneg"></td>
                                     <td class="matrix">0</td>
-                                    <td class="matrix" id="cbeta2"></td>
+                                    <td class="matrix" id="ctheta2"></td>
                                 </tr>
                             </table>
                         </td>
                         <td>
-                            <!-- R_X(γ) matrix -->
+                            <!-- R_1(φ) matrix - Roll -->
                             <table class="matrix">
                                 <tr>
                                     <td class="matrix">1</td>
@@ -103,13 +103,13 @@
                                 </tr>
                                 <tr>
                                     <td class="matrix">0</td>
-                                    <td class="matrix" id="cgamma1"></td>
-                                    <td class="matrix" id="sgammaneg"></td>
+                                    <td class="matrix" id="cphi1"></td>
+                                    <td class="matrix" id="sphineg"></td>
                                 </tr>
                                 <tr>
                                     <td class="matrix">0</td>
-                                    <td class="matrix" id="sgammapos"></td>
-                                    <td class="matrix" id="cgamma2"></td>
+                                    <td class="matrix" id="sphipos"></td>
+                                    <td class="matrix" id="cphi2"></td>
                                 </tr>
                             </table>
                         </td>
@@ -138,9 +138,9 @@
                 </table>
 
                 <p>
-                    <b>NOTE:</b> This uses the standard aerospace Yaw-Pitch-Roll convention 
-                    (Tait-Bryan angles Z-Y'-X''), equivalent to the first row of the Tait-Bryan angles table
-                    at <a href="https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix">this link</a>
+                    <b>NOTE:</b> This uses the standard aerospace 3-2-1 Euler angle convention 
+                    (Tait-Bryan angles Z-Y'-X''), also known as Yaw-Pitch-Roll.
+                    See <a href="https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix">Wikipedia</a> for more details.
                 </p>
 
                 <h1>Animation Menu</h1>
@@ -153,9 +153,9 @@
                 <table border="1" class="orientation-table">
                     <tr>
                         <td></td>
-                        <td>Yaw (α)</td>
-                        <td>Pitch (β)</td>
-                        <td>Roll (γ)</td>
+                        <td>Yaw (ψ)</td>
+                        <td>Pitch (θ)</td>
+                        <td>Roll (φ)</td>
                     </tr>
                     <tr>
                         <td>Orientation 1<br><button type="button" onclick="callOrientation1SetCurrent()">SET FROM CURRENT</button></td>
@@ -200,10 +200,12 @@
         <li>To view the gimbals from a different point of view, left click and drag your mouse. To zoom, scroll wheel. To translate, right click and drag</li>
     </ul>
 
-    <h3>Rotation Convention Change</h3>
+    <h3>3-2-1 Euler Angle Convention</h3>
     <p>
-        <b>Original:</b> R<sub>Y</sub>(α) R<sub>X</sub>(β) R<sub>Z</sub>(γ) — Yaw around Y, Pitch around X, Roll around Z<br>
-        <b>New:</b> R<sub>Z</sub>(α) R<sub>Y</sub>(β) R<sub>X</sub>(γ) — Yaw around Z (vertical), Pitch around Y (lateral), Roll around X (forward)
+        <b>Rotation Order:</b> R<sub>3</sub>(ψ) R<sub>2</sub>(θ) R<sub>1</sub>(φ)<br>
+        <b>Axis 3 (ψ):</b> Yaw — rotation around Z-axis (vertical)<br>
+        <b>Axis 2 (θ):</b> Pitch — rotation around Y-axis (lateral)<br>
+        <b>Axis 1 (φ):</b> Roll — rotation around X-axis (forward/longitudinal)
     </p>
     <p>This is the standard aerospace yaw-pitch-roll convention using intrinsic Z-Y'-X'' Tait-Bryan angles.</p>
 

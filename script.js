@@ -1,9 +1,9 @@
 // ============================================================
-// Yaw-Pitch-Roll Gimbal Visualization
-// Rotation Convention: R_Z(α) * R_Y(β) * R_X(γ)
-//   - Yaw (α): rotation around Z-axis (vertical) - OUTER gimbal (blue)
-//   - Pitch (β): rotation around Y-axis (lateral) - MIDDLE gimbal (orange)
-//   - Roll (γ): rotation around X-axis (forward) - INNER gimbal (green)
+// MAE345: 3-2-1 Euler Angles Gimbal Visualization
+// Rotation Convention: R_3(ψ) * R_2(θ) * R_1(φ)
+//   - Yaw (ψ): rotation around Z-axis (axis 3, vertical) - OUTER gimbal (blue)
+//   - Pitch (θ): rotation around Y-axis (axis 2, lateral) - MIDDLE gimbal (orange)
+//   - Roll (φ): rotation around X-axis (axis 1, forward) - INNER gimbal (green)
 // ============================================================
 
 // Global state
@@ -19,20 +19,20 @@ let planeMesh;
 let axesGroup;
 
 // Matrix display elements
-const calpha1 = document.getElementById("calpha1");
-const calpha2 = document.getElementById("calpha2");
-const salphapos = document.getElementById("salphapos");
-const salphaneg = document.getElementById("salphaneg");
+const cpsi1 = document.getElementById("cpsi1");
+const cpsi2 = document.getElementById("cpsi2");
+const spsipos = document.getElementById("spsipos");
+const spsineg = document.getElementById("spsineg");
 
-const cbeta1 = document.getElementById("cbeta1");
-const cbeta2 = document.getElementById("cbeta2");
-const sbetapos = document.getElementById("sbetapos");
-const sbetaneg = document.getElementById("sbetaneg");
+const ctheta1 = document.getElementById("ctheta1");
+const ctheta2 = document.getElementById("ctheta2");
+const sthetapos = document.getElementById("sthetapos");
+const sthetaneg = document.getElementById("sthetaneg");
 
-const cgamma1 = document.getElementById("cgamma1");
-const cgamma2 = document.getElementById("cgamma2");
-const sgammapos = document.getElementById("sgammapos");
-const sgammaneg = document.getElementById("sgammaneg");
+const cphi1 = document.getElementById("cphi1");
+const cphi2 = document.getElementById("cphi2");
+const sphipos = document.getElementById("sphipos");
+const sphineg = document.getElementById("sphineg");
 
 let rEntries = [];
 for (let i = 0; i < 3; i++) {
@@ -247,7 +247,9 @@ function createGimbals() {
     const rollMat = new THREE.MeshPhongMaterial({ color: 0x2c9f2c });
     rollRing = new THREE.Mesh(rollGeom, rollMat);
     // Rotate ring to lie in YZ plane (so it visually shows rotation around X)
+    // Flipped 180° so natural convection has Z pointing down
     rollRing.rotation.y = Math.PI / 2;
+    rollRing.rotation.x = Math.PI;
     rollGroup.add(rollRing);
     
     // Add marker for roll direction
@@ -315,17 +317,18 @@ function createAxes() {
     xArrow.position.x = axisLength;
     axesGroup.add(xArrow);
     
-    // Y-axis (Green) - Pitch axis, points up
+    // Y-axis (Green) - Pitch axis, points down (natural convection)
     const yGeom = new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 8);
     const yMat = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
     const yAxis = new THREE.Mesh(yGeom, yMat);
-    yAxis.position.y = axisLength / 2;
+    yAxis.position.y = -axisLength / 2;
     axesGroup.add(yAxis);
     
     // Y arrow head
     const yArrowGeom = new THREE.ConeGeometry(axisRadius * 2, axisRadius * 4, 8);
     const yArrow = new THREE.Mesh(yArrowGeom, yMat);
-    yArrow.position.y = axisLength;
+    yArrow.rotation.x = Math.PI;  // Point downward
+    yArrow.position.y = -axisLength;
     axesGroup.add(yArrow);
     
     // Z-axis (Blue) - Yaw axis, points right (starboard)
@@ -376,31 +379,31 @@ function updateScene() {
 }
 
 function updateMatrixDisplay() {
-    // R_Z(α) - Yaw matrix (rotation around Z)
+    // R_3(ψ) - Yaw matrix (rotation around Z / axis 3)
     let c = Math.round(Math.cos(yawAngle) * 100) / 100;
     let s = Math.round(Math.sin(yawAngle) * 100) / 100;
-    calpha1.innerHTML = c;
-    calpha2.innerHTML = c;
-    salphapos.innerHTML = s;
-    salphaneg.innerHTML = -s;
+    cpsi1.innerHTML = c;
+    cpsi2.innerHTML = c;
+    spsipos.innerHTML = s;
+    spsineg.innerHTML = -s;
     
-    // R_Y(β) - Pitch matrix (rotation around Y)
+    // R_2(θ) - Pitch matrix (rotation around Y / axis 2)
     c = Math.round(Math.cos(pitchAngle) * 100) / 100;
     s = Math.round(Math.sin(pitchAngle) * 100) / 100;
-    cbeta1.innerHTML = c;
-    cbeta2.innerHTML = c;
-    sbetapos.innerHTML = s;
-    sbetaneg.innerHTML = -s;
+    ctheta1.innerHTML = c;
+    ctheta2.innerHTML = c;
+    sthetapos.innerHTML = s;
+    sthetaneg.innerHTML = -s;
     
-    // R_X(γ) - Roll matrix (rotation around X)
+    // R_1(φ) - Roll matrix (rotation around X / axis 1)
     c = Math.round(Math.cos(rollAngle) * 100) / 100;
     s = Math.round(Math.sin(rollAngle) * 100) / 100;
-    cgamma1.innerHTML = c;
-    cgamma2.innerHTML = c;
-    sgammapos.innerHTML = s;
-    sgammaneg.innerHTML = -s;
+    cphi1.innerHTML = c;
+    cphi2.innerHTML = c;
+    sphipos.innerHTML = s;
+    sphineg.innerHTML = -s;
     
-    // Combined rotation matrix R = R_Z(α) * R_Y(β) * R_X(γ)
+    // Combined rotation matrix R = R_3(ψ) * R_2(θ) * R_1(φ)
     const { R } = yawPitchRoll2Rot(yawAngle, pitchAngle, rollAngle);
     const elements = R.elements;
     for (let i = 0; i < 3; i++) {
