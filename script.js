@@ -226,12 +226,30 @@ function init() {
 
 function createGimbals() {
     // ============================================================
-    // RIBBON-STYLE GIMBAL RINGS
-    // Flat bands instead of cylindrical tubes for better orientation visibility
+    // RIBBON-STYLE GIMBAL RINGS WITH SUBTLE AXIS INDICATORS
+    // Rings are the primary visual; axes are faint hints
     // ============================================================
     
     const ribbonWidth = 0.12;  // Radial width of ribbon
     const ribbonDepth = 0.015; // Thickness of ribbon
+    
+    // Subtle rod and pivot dimensions (thin and understated)
+    const rodRadius = 0.012;   // Very thin rods
+    const pivotRadius = 0.025; // Tiny pivot caps
+    
+    // Subtle semi-transparent material for axis rods
+    const subtleRodMat = new THREE.MeshBasicMaterial({
+        color: 0x666666,
+        transparent: true,
+        opacity: 0.35
+    });
+    
+    // Tiny muted pivot material
+    const subtlePivotMat = new THREE.MeshBasicMaterial({
+        color: 0x888888,
+        transparent: true,
+        opacity: 0.5
+    });
     
     // Helper function to create a ribbon ring
     function createRibbonRing(outerRadius, color) {
@@ -258,8 +276,21 @@ function createGimbals() {
         return new THREE.Mesh(geometry, material);
     }
     
+    // Helper function to create a tiny pivot cap
+    function createPivot() {
+        const geom = new THREE.SphereGeometry(pivotRadius, 8, 8);
+        return new THREE.Mesh(geom, subtlePivotMat);
+    }
+    
+    // Helper function to create a subtle rod
+    function createRod(length) {
+        const geom = new THREE.CylinderGeometry(rodRadius, rodRadius, length, 8);
+        return new THREE.Mesh(geom, subtleRodMat);
+    }
+    
     // ============================================================
     // YAW GIMBAL (OUTER) - Blue ribbon, HORIZONTAL in XZ plane
+    // Rotation about vertical Y axis (turntable motion)
     // ============================================================
     const yawRadius = 2.0;
     yawRing = createRibbonRing(yawRadius, 0x2f7bae);
@@ -274,8 +305,15 @@ function createGimbals() {
     yawMarker.position.set(yawRadius - ribbonWidth/2, 0, 0);
     yawRing.add(yawMarker);
     
+    // YAW AXIS: Very faint vertical line through center
+    const yawShaftLength = 1.8;
+    const yawShaft = createRod(yawShaftLength);
+    yawShaft.position.y = yawShaftLength / 2 - 0.2;
+    scene.add(yawShaft);
+    
     // ============================================================
     // PITCH GIMBAL (MIDDLE) - Orange ribbon, vertical in XY plane
+    // Rotation about lateral Z axis (nose up/down)
     // ============================================================
     const pitchRadius = 1.7;
     pitchRing = createRibbonRing(pitchRadius, 0xdb8e22);
@@ -289,8 +327,24 @@ function createGimbals() {
     pitchMarker.position.set(pitchRadius - ribbonWidth/2, 0, 0);
     pitchRing.add(pitchMarker);
     
+    // PITCH AXIS: Subtle thin rod across the ring (left-right, Z direction)
+    const pitchRodLength = yawRadius * 2 - 0.1;
+    const pitchRod = createRod(pitchRodLength);
+    pitchRod.rotation.x = Math.PI / 2;  // Align along Z axis
+    pitchGroup.add(pitchRod);
+    
+    // Tiny end caps where pitch rod meets yaw ring
+    const pitchCapLeft = createPivot();
+    pitchCapLeft.position.set(0, 0, -yawRadius + ribbonWidth/2);
+    pitchGroup.add(pitchCapLeft);
+    
+    const pitchCapRight = createPivot();
+    pitchCapRight.position.set(0, 0, yawRadius - ribbonWidth/2);
+    pitchGroup.add(pitchCapRight);
+    
     // ============================================================
     // ROLL GIMBAL (INNER) - Green ribbon, vertical in YZ plane
+    // Rotation about forward X axis (barrel roll)
     // ============================================================
     const rollRadius = 1.4;
     rollRing = createRibbonRing(rollRadius, 0x2c9f2c);
@@ -304,6 +358,21 @@ function createGimbals() {
     const rollMarker = new THREE.Mesh(rollMarkerGeom, rollMarkerMat);
     rollMarker.position.set(rollRadius - ribbonWidth/2, 0, 0);
     rollRing.add(rollMarker);
+    
+    // ROLL AXIS: Subtle thin rod along airplane's forward direction (X axis)
+    const rollRodLength = pitchRadius * 2 - 0.1;
+    const rollRod = createRod(rollRodLength);
+    rollRod.rotation.z = Math.PI / 2;  // Align along X axis
+    rollGroup.add(rollRod);
+    
+    // Tiny end caps where roll rod meets pitch ring
+    const rollCapFront = createPivot();
+    rollCapFront.position.set(pitchRadius - ribbonWidth/2, 0, 0);
+    rollGroup.add(rollCapFront);
+    
+    const rollCapBack = createPivot();
+    rollCapBack.position.set(-pitchRadius + ribbonWidth/2, 0, 0);
+    rollGroup.add(rollCapBack);
     
     // ============================================================
     // GREEN RAY: Semi-transparent connection from Z-axis to roll gimbal
