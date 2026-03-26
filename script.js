@@ -500,7 +500,7 @@ function updateScene() {
     
     // Apply rotations - each group rotates about its local axis
     // The nesting ensures proper intrinsic rotation behavior
-    yawGroup.rotation.y = yawAngle;      // Yaw (ψ): Rotate about global Y (vertical) - turntable
+    yawGroup.rotation.y = -yawAngle;     // Yaw (ψ): Rotate about global Y (vertical) - turntable (negated for right-hand rule)
     pitchGroup.rotation.z = pitchAngle;  // Pitch (θ): Rotate about local Z (lateral) - nose up/down
     rollGroup.rotation.x = rollAngle;    // Roll (φ): Rotate about local X (forward) - barrel roll
     
