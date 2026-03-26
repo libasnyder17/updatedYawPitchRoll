@@ -1,9 +1,32 @@
 // ============================================================
-// MAE345: 3-2-1 Euler Angles Gimbal Visualization
-// Rotation Convention: R_3(ψ) * R_2(θ) * R_1(φ)
-//   - Yaw (ψ): rotation around Z-axis (axis 3, vertical) - OUTER gimbal (blue)
-//   - Pitch (θ): rotation around Y-axis (axis 2, lateral) - MIDDLE gimbal (orange)
-//   - Roll (φ): rotation around X-axis (axis 1, forward) - INNER gimbal (green)
+// Yaw-Pitch-Roll Gimbal Visualization
+// Intrinsic 3-2-1 Euler Angles (Aerospace NED-like convention)
+//
+// Coordinate System (Three.js with aerospace mapping):
+//   - X: Forward (out the nose)
+//   - Y: Up in Three.js, but body Z points DOWN (out the belly)
+//   - Z: Right (out starboard wing)
+//
+// Rotation Sequence:
+//   1. Yaw (ψ): Rotate about VERTICAL axis (Three.js Y)
+//      → Whole system spins left/right like a turntable
+//      → OUTER ring (blue) rotates
+//
+//   2. Pitch (θ): Rotate about LATERAL axis (Three.js Z, after yaw)
+//      → Nose up/down motion
+//      → MIDDLE ring (orange) rotates
+//
+//   3. Roll (φ): Rotate about FORWARD axis (Three.js X, after yaw+pitch)
+//      → Wings tilt (barrel roll)
+//      → INNER ring (green) rotates
+//
+// Body Axes Colors:
+//   - X (Red): Forward - Roll axis
+//   - Y (Blue): Right - Pitch axis
+//   - Z (Green): Down - Yaw axis
+//
+// Scene Hierarchy:
+//   scene → yawGroup → pitchGroup → rollGroup → airplane
 // ============================================================
 
 // Global state
@@ -18,7 +41,7 @@ let yawRing, pitchRing, rollRing;
 let planeMesh;
 let axesGroup;
 
-// Matrix display elements
+// Matrix display elements - using Greek letter notation (ψ, θ, φ)
 const cpsi1 = document.getElementById("cpsi1");
 const cpsi2 = document.getElementById("cpsi2");
 const spsipos = document.getElementById("spsipos");
@@ -121,7 +144,7 @@ function quat2Rot(q) {
 }
 
 // ============================================================
-// 3D SCENE SETUP - PROPER HIERARCHY
+// 3D SCENE SETUP - PROPER HIERARCHY FOR INTRINSIC 3-2-1 EULER ANGLES
 // ============================================================
 
 function init() {
@@ -131,9 +154,10 @@ function init() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf0f0f0);
     
-    // Camera
+    // Camera - positioned for clear 3D view of all gimbal rotations
+    // Viewing from above and to the side to see yaw (turntable), pitch (nose up/down), roll (wing tilt)
     camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 0.1, 1000);
-    camera.position.set(5, 3, 5);
+    camera.position.set(4, 4, 4);
     camera.lookAt(0, 0, 0);
     
     // Renderer
@@ -158,18 +182,21 @@ function init() {
     scene.add(directionalLight2);
     
     // ============================================================
-    // CREATE NESTED HIERARCHY
+    // CREATE NESTED HIERARCHY FOR INTRINSIC 3-2-1 (YAW-PITCH-ROLL)
     // 
+    // In Three.js, Y is the vertical axis. Each rotation occurs on updated local axes:
+    //   1. Yaw (ψ): Rotate about GLOBAL Y axis (vertical - turntable motion)
+    //   2. Pitch (θ): Rotate about LOCAL Z axis (lateral - nose up/down)
+    //   3. Roll (φ): Rotate about LOCAL X axis (forward - barrel roll)
+    //
     // Scene Graph Structure:
     //   scene
-    //     └── yawGroup (rotates around Z-axis)
-    //           ├── yawRing (blue outer ring, lies in XY plane)
-    //           └── pitchGroup (rotates around Y-axis)
-    //                 ├── pitchRing (orange middle ring, lies in XZ plane)
-    //                 └── rollGroup (rotates around X-axis)
-    //                       ├── rollRing (green inner ring, lies in YZ plane)
-    //                       ├── airplane
-    //                       └── axes
+    //     └── yawGroup (rotation.y = ψ, rotates around global Y - turntable)
+    //           └── pitchGroup (rotation.z = θ, rotates around local Z - nose up/down)
+    //                 └── rollGroup (rotation.x = φ, rotates around local X - barrel roll)
+    //                       └── airplane + axes
+    //
+    // The gimbal rings are visual aids - each attached to its respective group
     // ============================================================
     
     // Create the nested groups
@@ -185,7 +212,7 @@ function init() {
     // Create gimbal rings
     createGimbals();
     
-    // Create airplane (add to rollGroup so it rotates with roll)
+    // Create airplane (add to rollGroup so it rotates with all three)
     createAirplane();
     rollGroup.add(planeMesh);
     
@@ -201,59 +228,68 @@ function createGimbals() {
     const tubeRadius = 0.04;
     
     // ============================================================
-    // YAW GIMBAL (OUTER) - Blue ring in XY plane
-    // Rotates around Z-axis (vertical)
-    // This ring is a child of yawGroup, so it rotates when yaw changes
+    // GIMBAL RING SETUP FOR INTRINSIC 3-2-1 (YAW-PITCH-ROLL)
+    // Using Three.js coordinates where Y is UP (vertical)
+    //
+    // Each ring is perpendicular to its rotation axis:
+    // - Yaw ring: HORIZONTAL (in XZ plane), rotates around Y (vertical) - TURNTABLE
+    // - Pitch ring: vertical in XY plane, rotates around Z (lateral) - NOSE UP/DOWN  
+    // - Roll ring: vertical in YZ plane, rotates around X (forward) - BARREL ROLL
+    // ============================================================
+    
+    // ============================================================
+    // YAW GIMBAL (OUTER) - Blue ring, HORIZONTAL in XZ plane
+    // Rotates around Y-axis (vertical - turntable motion)
+    // Whole system spins left/right like a turntable
     // ============================================================
     const yawRadius = 2.0;
     const yawGeom = new THREE.TorusGeometry(yawRadius, tubeRadius, 16, 100);
     const yawMat = new THREE.MeshPhongMaterial({ color: 0x2f7bae });
     yawRing = new THREE.Mesh(yawGeom, yawMat);
-    // Ring lies in XY plane by default (rotates around Z) - no rotation needed
+    // Torus is in XY by default, rotate 90° around X to put it in XZ plane (horizontal)
+    yawRing.rotation.x = Math.PI / 2;
     yawGroup.add(yawRing);
     
-    // Add a small marker to show yaw direction
-    const yawMarkerGeom = new THREE.SphereGeometry(tubeRadius * 2, 8, 8);
+    // Add marker to show yaw direction (on +X side initially)
+    const yawMarkerGeom = new THREE.SphereGeometry(tubeRadius * 2.5, 8, 8);
     const yawMarker = new THREE.Mesh(yawMarkerGeom, yawMat);
     yawMarker.position.set(yawRadius, 0, 0);
     yawRing.add(yawMarker);
     
     // ============================================================
-    // PITCH GIMBAL (MIDDLE) - Orange ring in XZ plane
-    // Rotates around Y-axis (lateral)
-    // This ring is a child of pitchGroup, so it rotates when pitch changes
+    // PITCH GIMBAL (MIDDLE) - Orange ring, vertical in XY plane
+    // Rotates around Z-axis (lateral axis - nose up/down motion)
+    // This ring is inside yaw, so it inherits yaw rotation
     // ============================================================
-    const pitchRadius = 1.8;
+    const pitchRadius = 1.7;
     const pitchGeom = new THREE.TorusGeometry(pitchRadius, tubeRadius, 16, 100);
     const pitchMat = new THREE.MeshPhongMaterial({ color: 0xdb8e22 });
     pitchRing = new THREE.Mesh(pitchGeom, pitchMat);
-    // Rotate ring to lie in XZ plane (so it visually shows rotation around Y)
-    pitchRing.rotation.x = Math.PI / 2;
+    // Torus is in XY plane by default - vertical ring for pitch (nose up/down)
+    // No rotation needed
     pitchGroup.add(pitchRing);
     
-    // Add marker for pitch direction
-    const pitchMarkerGeom = new THREE.SphereGeometry(tubeRadius * 2, 8, 8);
+    // Add marker for pitch direction (on +X side = forward)
+    const pitchMarkerGeom = new THREE.SphereGeometry(tubeRadius * 2.5, 8, 8);
     const pitchMarker = new THREE.Mesh(pitchMarkerGeom, pitchMat);
     pitchMarker.position.set(pitchRadius, 0, 0);
     pitchRing.add(pitchMarker);
     
     // ============================================================
-    // ROLL GIMBAL (INNER) - Green ring in YZ plane
-    // Rotates around X-axis (forward/longitudinal)
-    // This ring is a child of rollGroup, so it rotates when roll changes
+    // ROLL GIMBAL (INNER) - Green ring, vertical in YZ plane
+    // Rotates around X-axis (longitudinal/forward axis - barrel roll motion)
+    // This ring inherits both yaw and pitch rotations
     // ============================================================
-    const rollRadius = 1.6;
+    const rollRadius = 1.4;
     const rollGeom = new THREE.TorusGeometry(rollRadius, tubeRadius, 16, 100);
     const rollMat = new THREE.MeshPhongMaterial({ color: 0x2c9f2c });
     rollRing = new THREE.Mesh(rollGeom, rollMat);
-    // Rotate ring to lie in YZ plane (so it visually shows rotation around X)
-    // Flipped 180° so natural convection has Z pointing down
+    // Rotate ring 90° around Y to lie in YZ plane (perpendicular to X/forward)
     rollRing.rotation.y = Math.PI / 2;
-    rollRing.rotation.x = Math.PI;
     rollGroup.add(rollRing);
     
-    // Add marker for roll direction
-    const rollMarkerGeom = new THREE.SphereGeometry(tubeRadius * 2, 8, 8);
+    // Add marker for roll direction (on +Y side = up)
+    const rollMarkerGeom = new THREE.SphereGeometry(tubeRadius * 2.5, 8, 8);
     const rollMarker = new THREE.Mesh(rollMarkerGeom, rollMat);
     rollMarker.position.set(rollRadius, 0, 0);
     rollRing.add(rollMarker);
@@ -262,47 +298,113 @@ function createGimbals() {
 function createAirplane() {
     planeMesh = new THREE.Group();
     
-    // Fuselage - along X-axis (nose pointing +X)
-    const fuselageGeom = new THREE.CylinderGeometry(0.15, 0.1, 2, 16);
-    const fuselageMat = new THREE.MeshPhongMaterial({ color: 0xcccccc });
-    const fuselage = new THREE.Mesh(fuselageGeom, fuselageMat);
-    fuselage.rotation.z = Math.PI / 2;  // Rotate to align with X-axis
-    planeMesh.add(fuselage);
+    // B-2 Stealth Bomber - dark matte stealth finish
+    const stealthMat = new THREE.MeshPhongMaterial({ color: 0x1a1a2e, shininess: 10 });
+    const accentMat = new THREE.MeshPhongMaterial({ color: 0x16213e, shininess: 5 });
+    const canopyMat = new THREE.MeshPhongMaterial({ color: 0x2d4059, shininess: 40, transparent: true, opacity: 0.7 });
+    const engineMat = new THREE.MeshPhongMaterial({ color: 0x0f0f0f, shininess: 5 });
     
-    // Nose cone
-    const noseGeom = new THREE.ConeGeometry(0.15, 0.4, 16);
-    const nose = new THREE.Mesh(noseGeom, fuselageMat);
-    nose.rotation.z = -Math.PI / 2;
-    nose.position.x = 1.2;
-    planeMesh.add(nose);
+    // B-2 Flying Wing shape - main body
+    const wingShape = new THREE.Shape();
+    wingShape.moveTo(1.2, 0);
+    wingShape.lineTo(0.3, 0.4);
+    wingShape.lineTo(-0.6, 1.4);
+    wingShape.lineTo(-0.8, 1.35);
+    wingShape.lineTo(-0.7, 1.25);
+    wingShape.lineTo(-0.9, 1.2);
+    wingShape.lineTo(-0.5, 0.5);
+    wingShape.lineTo(-0.7, 0);
+    wingShape.lineTo(-0.5, -0.5);
+    wingShape.lineTo(-0.9, -1.2);
+    wingShape.lineTo(-0.7, -1.25);
+    wingShape.lineTo(-0.8, -1.35);
+    wingShape.lineTo(-0.6, -1.4);
+    wingShape.lineTo(0.3, -0.4);
+    wingShape.closePath();
     
-    // Wings - span along Z-axis
-    const wingGeom = new THREE.BoxGeometry(0.5, 0.02, 1.8);
-    const wingMat = new THREE.MeshPhongMaterial({ color: 0x888888 });
-    const wings = new THREE.Mesh(wingGeom, wingMat);
-    wings.position.x = -0.1;
-    planeMesh.add(wings);
+    const wingExtrudeSettings = { depth: 0.08, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02 };
+    const wingGeom = new THREE.ExtrudeGeometry(wingShape, wingExtrudeSettings);
+    const mainWing = new THREE.Mesh(wingGeom, stealthMat);
+    mainWing.rotation.x = Math.PI / 2;
+    mainWing.position.y = 0.04;
+    planeMesh.add(mainWing);
     
-    // Tail vertical stabilizer - up along Y
-    const tailVGeom = new THREE.BoxGeometry(0.3, 0.4, 0.02);
-    const tailV = new THREE.Mesh(tailVGeom, wingMat);
-    tailV.position.set(-0.9, 0.2, 0);
-    planeMesh.add(tailV);
+    // Center body bump (cockpit area)
+    const bodyShape = new THREE.Shape();
+    bodyShape.moveTo(0.8, 0);
+    bodyShape.quadraticCurveTo(0.4, 0.25, -0.2, 0.2);
+    bodyShape.lineTo(-0.3, 0);
+    bodyShape.lineTo(-0.2, -0.2);
+    bodyShape.quadraticCurveTo(0.4, -0.25, 0.8, 0);
     
-    // Tail horizontal stabilizer
-    const tailHGeom = new THREE.BoxGeometry(0.2, 0.02, 0.6);
-    const tailH = new THREE.Mesh(tailHGeom, wingMat);
-    tailH.position.set(-0.9, 0, 0);
-    planeMesh.add(tailH);
+    const bodyExtrudeSettings = { depth: 0.15, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03 };
+    const bodyGeom = new THREE.ExtrudeGeometry(bodyShape, bodyExtrudeSettings);
+    const centerBody = new THREE.Mesh(bodyGeom, accentMat);
+    centerBody.rotation.x = Math.PI / 2;
+    centerBody.position.set(0, 0.08, 0);
+    planeMesh.add(centerBody);
+    
+    // Cockpit windows
+    const canopyGeom = new THREE.BoxGeometry(0.3, 0.04, 0.25);
+    const canopy = new THREE.Mesh(canopyGeom, canopyMat);
+    canopy.position.set(0.55, 0.2, 0);
+    planeMesh.add(canopy);
+    
+    // Engine exhausts (4 internal engines)
+    const exhaustGeom = new THREE.CylinderGeometry(0.04, 0.05, 0.15, 8);
+    const exhaustPositions = [
+        { x: -0.55, z: 0.35 },
+        { x: -0.55, z: 0.12 },
+        { x: -0.55, z: -0.12 },
+        { x: -0.55, z: -0.35 }
+    ];
+    
+    exhaustPositions.forEach(pos => {
+        const exhaust = new THREE.Mesh(exhaustGeom, engineMat);
+        exhaust.rotation.z = Math.PI / 2;
+        exhaust.position.set(pos.x, 0.04, pos.z);
+        planeMesh.add(exhaust);
+    });
+    
+    // Panel lines
+    const panelMat = new THREE.MeshPhongMaterial({ color: 0x0d0d1a, shininess: 2 });
+    const edgeGeom = new THREE.BoxGeometry(0.8, 0.005, 0.02);
+    
+    const leftEdge = new THREE.Mesh(edgeGeom, panelMat);
+    leftEdge.position.set(0, 0.13, 0.6);
+    leftEdge.rotation.y = -0.5;
+    planeMesh.add(leftEdge);
+    
+    const rightEdge = new THREE.Mesh(edgeGeom, panelMat);
+    rightEdge.position.set(0, 0.13, -0.6);
+    rightEdge.rotation.y = 0.5;
+    planeMesh.add(rightEdge);
+    
+    // Orient airplane so:
+    // - Nose points along +X (forward / roll axis)
+    // - Wings extend along ±Z (lateral)
+    // - Up is +Y
+    // No rotation needed - airplane is built with nose along +X
 }
 
 function createAxes() {
     axesGroup = new THREE.Group();
     
-    const axisLength = 0.6;
+    const axisLength = 0.8;
     const axisRadius = 0.03;
     
-    // X-axis (Red) - Roll axis, points forward
+    // ============================================================
+    // BODY-FIXED AXES for 3-2-1 Euler angles (aerospace NED-like)
+    // These axes rotate with the airplane body
+    //
+    // Convention:
+    //   X (Red): Forward (out the nose) - Roll axis
+    //   Y (Blue): Right (out starboard wing) - Pitch axis  
+    //   Z (Green): Down (out the belly) - Yaw axis
+    // ============================================================
+    
+    // X-axis (Red) - Forward/longitudinal - Roll axis
+    // Points along the nose direction (+X in Three.js)
     const xGeom = new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 8);
     const xMat = new THREE.MeshPhongMaterial({ color: 0xff0000 });
     const xAxis = new THREE.Mesh(xGeom, xMat);
@@ -317,55 +419,61 @@ function createAxes() {
     xArrow.position.x = axisLength;
     axesGroup.add(xArrow);
     
-    // Y-axis (Green) - Pitch axis, points down (natural convection)
+    // Y-axis (Blue) - Lateral/right - Pitch axis
+    // Points along the right wing direction (+Z in Three.js)
     const yGeom = new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 8);
-    const yMat = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+    const yMat = new THREE.MeshPhongMaterial({ color: 0x0000ff });
     const yAxis = new THREE.Mesh(yGeom, yMat);
-    yAxis.position.y = -axisLength / 2;
+    yAxis.rotation.x = Math.PI / 2;
+    yAxis.position.z = axisLength / 2;
     axesGroup.add(yAxis);
     
-    // Y arrow head
+    // Y arrow head (pointing along +Z = starboard wing)
     const yArrowGeom = new THREE.ConeGeometry(axisRadius * 2, axisRadius * 4, 8);
     const yArrow = new THREE.Mesh(yArrowGeom, yMat);
-    yArrow.rotation.x = Math.PI;  // Point downward
-    yArrow.position.y = -axisLength;
+    yArrow.rotation.x = Math.PI / 2;
+    yArrow.position.z = axisLength;
     axesGroup.add(yArrow);
     
-    // Z-axis (Blue) - Yaw axis, points right (starboard)
+    // Z-axis (Green) - Down/vertical - Yaw axis
+    // Points down from the body (-Y in Three.js)
     const zGeom = new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 8);
-    const zMat = new THREE.MeshPhongMaterial({ color: 0x0000ff });
+    const zMat = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
     const zAxis = new THREE.Mesh(zGeom, zMat);
-    zAxis.rotation.x = Math.PI / 2;
-    zAxis.position.z = axisLength / 2;
+    zAxis.position.y = -axisLength / 2;
     axesGroup.add(zAxis);
     
-    // Z arrow head
+    // Z arrow head (pointing DOWN)
     const zArrowGeom = new THREE.ConeGeometry(axisRadius * 2, axisRadius * 4, 8);
     const zArrow = new THREE.Mesh(zArrowGeom, zMat);
-    zArrow.rotation.x = Math.PI / 2;
-    zArrow.position.z = axisLength;
+    zArrow.rotation.x = Math.PI;  // Flip to point down
+    zArrow.position.y = -axisLength;
     axesGroup.add(zArrow);
 }
 
 // ============================================================
-// UPDATE SCENE - Simply set group rotations!
+// UPDATE SCENE - Apply rotations in intrinsic 3-2-1 order
 // ============================================================
 
 function updateScene() {
     // ============================================================
-    // KEY FIX: Apply rotations to the GROUP containers
-    // Each group rotates around its respective axis.
-    // Because of the parent-child hierarchy, rotations accumulate
-    // automatically through the scene graph.
+    // INTRINSIC 3-2-1 EULER ANGLES (Yaw-Pitch-Roll)
+    // Using Three.js where Y is the vertical axis
     //
-    // yawGroup.rotation.z   -> rotates yawRing + everything inside
-    // pitchGroup.rotation.y -> rotates pitchRing + everything inside  
-    // rollGroup.rotation.x  -> rotates rollRing + airplane + axes
+    // The nested hierarchy automatically handles intrinsic rotations:
+    // - yawGroup.rotation.y rotates around GLOBAL Y (vertical axis) - TURNTABLE
+    // - pitchGroup.rotation.z rotates around LOCAL Z (lateral) - NOSE UP/DOWN
+    // - rollGroup.rotation.x rotates around LOCAL X (forward) - BARREL ROLL
+    //
+    // This creates the proper body-frame rotation sequence where
+    // each successive rotation is about the newly-rotated axis.
     // ============================================================
     
-    yawGroup.rotation.z = yawAngle;      // Yaw: rotate around Z
-    pitchGroup.rotation.y = pitchAngle;  // Pitch: rotate around Y
-    rollGroup.rotation.x = rollAngle;    // Roll: rotate around X
+    // Apply rotations - each group rotates about its local axis
+    // The nesting ensures proper intrinsic rotation behavior
+    yawGroup.rotation.y = yawAngle;      // Yaw (ψ): Rotate about global Y (vertical) - turntable
+    pitchGroup.rotation.z = pitchAngle;  // Pitch (θ): Rotate about local Z (lateral) - nose up/down
+    rollGroup.rotation.x = rollAngle;    // Roll (φ): Rotate about local X (forward) - barrel roll
     
     // Update visibility
     planeMesh.visible = displayPlane;
@@ -379,7 +487,7 @@ function updateScene() {
 }
 
 function updateMatrixDisplay() {
-    // R_3(ψ) - Yaw matrix (rotation around Z / axis 3)
+    // R_Z(ψ) - Yaw matrix (rotation around Z - vertical axis)
     let c = Math.round(Math.cos(yawAngle) * 100) / 100;
     let s = Math.round(Math.sin(yawAngle) * 100) / 100;
     cpsi1.innerHTML = c;
@@ -387,7 +495,7 @@ function updateMatrixDisplay() {
     spsipos.innerHTML = s;
     spsineg.innerHTML = -s;
     
-    // R_2(θ) - Pitch matrix (rotation around Y / axis 2)
+    // R_Y(θ) - Pitch matrix (rotation around Y - lateral axis)
     c = Math.round(Math.cos(pitchAngle) * 100) / 100;
     s = Math.round(Math.sin(pitchAngle) * 100) / 100;
     ctheta1.innerHTML = c;
@@ -395,7 +503,7 @@ function updateMatrixDisplay() {
     sthetapos.innerHTML = s;
     sthetaneg.innerHTML = -s;
     
-    // R_1(φ) - Roll matrix (rotation around X / axis 1)
+    // R_X(φ) - Roll matrix (rotation around X - longitudinal axis)
     c = Math.round(Math.cos(rollAngle) * 100) / 100;
     s = Math.round(Math.sin(rollAngle) * 100) / 100;
     cphi1.innerHTML = c;
@@ -403,7 +511,7 @@ function updateMatrixDisplay() {
     sphipos.innerHTML = s;
     sphineg.innerHTML = -s;
     
-    // Combined rotation matrix R = R_3(ψ) * R_2(θ) * R_1(φ)
+    // Combined rotation matrix R = R_Z(ψ) * R_Y(θ) * R_X(φ)
     const { R } = yawPitchRoll2Rot(yawAngle, pitchAngle, rollAngle);
     const elements = R.elements;
     for (let i = 0; i < 3; i++) {
