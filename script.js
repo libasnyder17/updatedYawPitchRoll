@@ -66,50 +66,61 @@ for (let i = 0; i < 3; i++) {
 }
 
 // ============================================================
-// ROTATION MATRIX FUNCTIONS (for display purposes)
+// DCM (Direction Cosine Matrix) FUNCTIONS
+// Standard aerospace convention: [BN] = T1(φ) * T2(θ) * T3(ψ)
+// These are passive rotation matrices (coordinate transformations)
 // ============================================================
 
-function fromXRotation(theta) {
-    const s = Math.sin(theta);
-    const c = Math.cos(theta);
+// T1(φ) - DCM for rotation about X-axis (Roll)
+// Transforms from intermediate frame to body frame
+function T1(phi) {
+    const s = Math.sin(phi);
+    const c = Math.cos(phi);
     return new THREE.Matrix4().set(
-        1, 0, 0, 0,
-        0, c, -s, 0,
-        0, s, c, 0,
-        0, 0, 0, 1
+        1, 0,  0, 0,
+        0, c,  s, 0,
+        0, -s, c, 0,
+        0, 0,  0, 1
     );
 }
 
-function fromYRotation(theta) {
+// T2(θ) - DCM for rotation about Y-axis (Pitch)
+// Transforms from intermediate frame after yaw
+function T2(theta) {
     const s = Math.sin(theta);
     const c = Math.cos(theta);
     return new THREE.Matrix4().set(
-        c, 0, s, 0,
-        0, 1, 0, 0,
-        -s, 0, c, 0,
-        0, 0, 0, 1
+        c, 0, -s, 0,
+        0, 1,  0, 0,
+        s, 0,  c, 0,
+        0, 0,  0, 1
     );
 }
 
-function fromZRotation(theta) {
-    const s = Math.sin(theta);
-    const c = Math.cos(theta);
+// T3(ψ) - DCM for rotation about Z-axis (Yaw)
+// Transforms from navigation/inertial frame
+function T3(psi) {
+    const s = Math.sin(psi);
+    const c = Math.cos(psi);
     return new THREE.Matrix4().set(
-        c, -s, 0, 0,
-        s, c, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
+        c,  s, 0, 0,
+        -s, c, 0, 0,
+        0,  0, 1, 0,
+        0,  0, 0, 1
     );
 }
 
+// Compute DCM [BN] = T1(φ) * T2(θ) * T3(ψ)
+// This is the standard 3-2-1 Euler angle DCM
 function yawPitchRoll2Rot(yaw, pitch, roll) {
-    const rotYaw = fromZRotation(yaw);
-    const rotPitch = fromYRotation(pitch);
-    const rotRoll = fromXRotation(roll);
+    const rotRoll = T1(roll);    // T1(φ)
+    const rotPitch = T2(pitch);  // T2(θ)
+    const rotYaw = T3(yaw);      // T3(ψ)
     
+    // [BN] = T1 * T2 * T3 (multiply left to right)
     const R = new THREE.Matrix4();
-    R.multiplyMatrices(rotYaw, rotPitch);
-    R.multiply(rotRoll);
+    R.multiplyMatrices(rotRoll, rotPitch);  // T1 * T2
+    R.multiply(rotYaw);                      // (T1 * T2) * T3
     
     return { rotYaw, rotPitch, rotRoll, R };
 }
@@ -601,31 +612,31 @@ function updateScene() {
 }
 
 function updateMatrixDisplay() {
-    // R_Z(ψ) - Yaw matrix (rotation around Z - vertical axis)
-    let c = Math.round(Math.cos(yawAngle) * 100) / 100;
-    let s = Math.round(Math.sin(yawAngle) * 100) / 100;
-    cpsi1.innerHTML = c;
-    cpsi2.innerHTML = c;
-    spsipos.innerHTML = s;
-    spsineg.innerHTML = -s;
+    // T1(φ) - Roll DCM (rotation about X-axis)
+    let c = Math.round(Math.cos(rollAngle) * 100) / 100;
+    let s = Math.round(Math.sin(rollAngle) * 100) / 100;
+    cphi1.innerHTML = c;
+    cphi2.innerHTML = c;
+    sphipos.innerHTML = s;   // +sin(φ) in position (1,2)
+    sphineg.innerHTML = -s;  // -sin(φ) in position (2,1)
     
-    // R_Y(θ) - Pitch matrix (rotation around Y - lateral axis)
+    // T2(θ) - Pitch DCM (rotation about Y-axis)
     c = Math.round(Math.cos(pitchAngle) * 100) / 100;
     s = Math.round(Math.sin(pitchAngle) * 100) / 100;
     ctheta1.innerHTML = c;
     ctheta2.innerHTML = c;
-    sthetapos.innerHTML = s;
-    sthetaneg.innerHTML = -s;
+    sthetapos.innerHTML = s;   // +sin(θ) in position (2,0)
+    sthetaneg.innerHTML = -s;  // -sin(θ) in position (0,2)
     
-    // R_X(φ) - Roll matrix (rotation around X - longitudinal axis)
-    c = Math.round(Math.cos(rollAngle) * 100) / 100;
-    s = Math.round(Math.sin(rollAngle) * 100) / 100;
-    cphi1.innerHTML = c;
-    cphi2.innerHTML = c;
-    sphipos.innerHTML = s;
-    sphineg.innerHTML = -s;
+    // T3(ψ) - Yaw DCM (rotation about Z-axis)
+    c = Math.round(Math.cos(yawAngle) * 100) / 100;
+    s = Math.round(Math.sin(yawAngle) * 100) / 100;
+    cpsi1.innerHTML = c;
+    cpsi2.innerHTML = c;
+    spsipos.innerHTML = s;   // +sin(ψ) in position (0,1)
+    spsineg.innerHTML = -s;  // -sin(ψ) in position (1,0)
     
-    // Combined rotation matrix R = R_Z(ψ) * R_Y(θ) * R_X(φ)
+    // Combined DCM [BN] = T1(φ) * T2(θ) * T3(ψ)
     const { R } = yawPitchRoll2Rot(yawAngle, pitchAngle, rollAngle);
     const elements = R.elements;
     for (let i = 0; i < 3; i++) {

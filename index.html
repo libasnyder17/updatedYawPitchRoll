@@ -12,7 +12,7 @@
 <body>
     <h1>MAE345: 3-2-1 Euler Angles Visualization</h1>
     <h3>Yaw-Pitch-Roll Gimbal Demo</h3>
-    <p>Using standard 3-2-1 Euler angle convention: R<sub>3</sub>(ψ) R<sub>2</sub>(θ) R<sub>1</sub>(φ)</p>
+    <p>Using standard 3-2-1 Euler angle convention: [BN] = T<sub>1</sub>(φ) T<sub>2</sub>(θ) T<sub>3</sub>(ψ)</p>
 
     <table class="main-layout">
         <tr>
@@ -46,23 +46,63 @@
                 
                 <table class="matrix-layout">
                     <tr>
-                        <td><h3>\[ R_3(\psi) \]</h3></td>
-                        <td><h3>\[ R_2(\theta) \]</h3></td>
-                        <td><h3>\[ R_1(\phi) \]</h3></td>
+                        <td><h3>\[ T_1(\phi) \]</h3></td>
+                        <td><h3>\[ T_2(\theta) \]</h3></td>
+                        <td><h3>\[ T_3(\psi) \]</h3></td>
                         <td></td>
-                        <td><h3>\[ R_3(\psi) R_2(\theta) R_1(\phi) \]</h3></td>
+                        <td><h3>\[ [BN] = T_1 T_2 T_3 \]</h3></td>
                     </tr>
                     <tr>
                         <td>
-                            <!-- R_3(ψ) matrix - Yaw -->
+                            <!-- T_1(φ) matrix - Roll about X (DCM form) -->
                             <table class="matrix">
                                 <tr>
-                                    <td class="matrix" id="cpsi1"></td>
-                                    <td class="matrix" id="spsineg"></td>
+                                    <td class="matrix">1</td>
+                                    <td class="matrix">0</td>
                                     <td class="matrix">0</td>
                                 </tr>
                                 <tr>
+                                    <td class="matrix">0</td>
+                                    <td class="matrix" id="cphi1"></td>
+                                    <td class="matrix" id="sphipos"></td>
+                                </tr>
+                                <tr>
+                                    <td class="matrix">0</td>
+                                    <td class="matrix" id="sphineg"></td>
+                                    <td class="matrix" id="cphi2"></td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <!-- T_2(θ) matrix - Pitch about Y (DCM form) -->
+                            <table class="matrix">
+                                <tr>
+                                    <td class="matrix" id="ctheta1"></td>
+                                    <td class="matrix">0</td>
+                                    <td class="matrix" id="sthetaneg"></td>
+                                </tr>
+                                <tr>
+                                    <td class="matrix">0</td>
+                                    <td class="matrix">1</td>
+                                    <td class="matrix">0</td>
+                                </tr>
+                                <tr>
+                                    <td class="matrix" id="sthetapos"></td>
+                                    <td class="matrix">0</td>
+                                    <td class="matrix" id="ctheta2"></td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <!-- T_3(ψ) matrix - Yaw about Z (DCM form) -->
+                            <table class="matrix">
+                                <tr>
+                                    <td class="matrix" id="cpsi1"></td>
                                     <td class="matrix" id="spsipos"></td>
+                                    <td class="matrix">0</td>
+                                </tr>
+                                <tr>
+                                    <td class="matrix" id="spsineg"></td>
                                     <td class="matrix" id="cpsi2"></td>
                                     <td class="matrix">0</td>
                                 </tr>
@@ -73,49 +113,9 @@
                                 </tr>
                             </table>
                         </td>
-                        <td>
-                            <!-- R_2(θ) matrix - Pitch -->
-                            <table class="matrix">
-                                <tr>
-                                    <td class="matrix" id="ctheta1"></td>
-                                    <td class="matrix">0</td>
-                                    <td class="matrix" id="sthetapos"></td>
-                                </tr>
-                                <tr>
-                                    <td class="matrix">0</td>
-                                    <td class="matrix">1</td>
-                                    <td class="matrix">0</td>
-                                </tr>
-                                <tr>
-                                    <td class="matrix" id="sthetaneg"></td>
-                                    <td class="matrix">0</td>
-                                    <td class="matrix" id="ctheta2"></td>
-                                </tr>
-                            </table>
-                        </td>
-                        <td>
-                            <!-- R_1(φ) matrix - Roll -->
-                            <table class="matrix">
-                                <tr>
-                                    <td class="matrix">1</td>
-                                    <td class="matrix">0</td>
-                                    <td class="matrix">0</td>
-                                </tr>
-                                <tr>
-                                    <td class="matrix">0</td>
-                                    <td class="matrix" id="cphi1"></td>
-                                    <td class="matrix" id="sphineg"></td>
-                                </tr>
-                                <tr>
-                                    <td class="matrix">0</td>
-                                    <td class="matrix" id="sphipos"></td>
-                                    <td class="matrix" id="cphi2"></td>
-                                </tr>
-                            </table>
-                        </td>
                         <td><h1>\[ = \]</h1></td>
                         <td>
-                            <!-- Combined rotation matrix -->
+                            <!-- Combined DCM [BN] -->
                             <table class="matrix">
                                 <tr>
                                     <td class="col1" id="r00"></td>
@@ -139,7 +139,8 @@
 
                 <p>
                     <b>NOTE:</b> This uses the standard aerospace 3-2-1 Euler angle convention 
-                    (Tait-Bryan angles Z-Y'-X''), also known as Yaw-Pitch-Roll.
+                    (Tait-Bryan angles Z-Y'-X''), also known as Yaw-Pitch-Roll.<br>
+                    DCM [BN] transforms vectors from Navigation (N) to Body (B) frame.<br>
                     See <a href="https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix">Wikipedia</a> for more details.
                 </p>
 
