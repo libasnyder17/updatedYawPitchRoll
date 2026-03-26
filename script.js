@@ -225,74 +225,103 @@ function init() {
 }
 
 function createGimbals() {
-    const tubeRadius = 0.04;
-    
     // ============================================================
-    // GIMBAL RING SETUP FOR INTRINSIC 3-2-1 (YAW-PITCH-ROLL)
-    // Using Three.js coordinates where Y is UP (vertical)
-    //
-    // Each ring is perpendicular to its rotation axis:
-    // - Yaw ring: HORIZONTAL (in XZ plane), rotates around Y (vertical) - TURNTABLE
-    // - Pitch ring: vertical in XY plane, rotates around Z (lateral) - NOSE UP/DOWN  
-    // - Roll ring: vertical in YZ plane, rotates around X (forward) - BARREL ROLL
+    // RIBBON-STYLE GIMBAL RINGS
+    // Flat bands instead of cylindrical tubes for better orientation visibility
     // ============================================================
     
+    const ribbonWidth = 0.12;  // Radial width of ribbon
+    const ribbonDepth = 0.015; // Thickness of ribbon
+    
+    // Helper function to create a ribbon ring
+    function createRibbonRing(outerRadius, color) {
+        const innerRadius = outerRadius - ribbonWidth;
+        
+        // Create annulus shape
+        const ringShape = new THREE.Shape();
+        ringShape.absarc(0, 0, outerRadius, 0, Math.PI * 2, false);
+        
+        const holePath = new THREE.Path();
+        holePath.absarc(0, 0, innerRadius, 0, Math.PI * 2, true);
+        ringShape.holes.push(holePath);
+        
+        // Extrude for thickness
+        const extrudeSettings = { depth: ribbonDepth, bevelEnabled: false };
+        const geometry = new THREE.ExtrudeGeometry(ringShape, extrudeSettings);
+        geometry.center();
+        
+        const material = new THREE.MeshPhongMaterial({ 
+            color: color,
+            side: THREE.DoubleSide,
+            shininess: 60
+        });
+        return new THREE.Mesh(geometry, material);
+    }
+    
     // ============================================================
-    // YAW GIMBAL (OUTER) - Blue ring, HORIZONTAL in XZ plane
-    // Rotates around Y-axis (vertical - turntable motion)
-    // Whole system spins left/right like a turntable
+    // YAW GIMBAL (OUTER) - Blue ribbon, HORIZONTAL in XZ plane
     // ============================================================
     const yawRadius = 2.0;
-    const yawGeom = new THREE.TorusGeometry(yawRadius, tubeRadius, 16, 100);
-    const yawMat = new THREE.MeshPhongMaterial({ color: 0x2f7bae });
-    yawRing = new THREE.Mesh(yawGeom, yawMat);
-    // Torus is in XY by default, rotate 90° around X to put it in XZ plane (horizontal)
+    yawRing = createRibbonRing(yawRadius, 0x2f7bae);
+    // Rotate to lie in XZ plane (horizontal)
     yawRing.rotation.x = Math.PI / 2;
     yawGroup.add(yawRing);
     
-    // Add marker to show yaw direction (on +X side initially)
-    const yawMarkerGeom = new THREE.SphereGeometry(tubeRadius * 2.5, 8, 8);
-    const yawMarker = new THREE.Mesh(yawMarkerGeom, yawMat);
-    yawMarker.position.set(yawRadius, 0, 0);
+    // Yaw marker
+    const yawMarkerGeom = new THREE.BoxGeometry(0.15, 0.08, 0.04);
+    const yawMarkerMat = new THREE.MeshPhongMaterial({ color: 0x2f7bae });
+    const yawMarker = new THREE.Mesh(yawMarkerGeom, yawMarkerMat);
+    yawMarker.position.set(yawRadius - ribbonWidth/2, 0, 0);
     yawRing.add(yawMarker);
     
     // ============================================================
-    // PITCH GIMBAL (MIDDLE) - Orange ring, vertical in XY plane
-    // Rotates around Z-axis (lateral axis - nose up/down motion)
-    // This ring is inside yaw, so it inherits yaw rotation
+    // PITCH GIMBAL (MIDDLE) - Orange ribbon, vertical in XY plane
     // ============================================================
     const pitchRadius = 1.7;
-    const pitchGeom = new THREE.TorusGeometry(pitchRadius, tubeRadius, 16, 100);
-    const pitchMat = new THREE.MeshPhongMaterial({ color: 0xdb8e22 });
-    pitchRing = new THREE.Mesh(pitchGeom, pitchMat);
-    // Torus is in XY plane by default - vertical ring for pitch (nose up/down)
-    // No rotation needed
+    pitchRing = createRibbonRing(pitchRadius, 0xdb8e22);
+    // Already in XY plane by default
     pitchGroup.add(pitchRing);
     
-    // Add marker for pitch direction (on +X side = forward)
-    const pitchMarkerGeom = new THREE.SphereGeometry(tubeRadius * 2.5, 8, 8);
-    const pitchMarker = new THREE.Mesh(pitchMarkerGeom, pitchMat);
-    pitchMarker.position.set(pitchRadius, 0, 0);
+    // Pitch marker
+    const pitchMarkerGeom = new THREE.BoxGeometry(0.15, 0.08, 0.04);
+    const pitchMarkerMat = new THREE.MeshPhongMaterial({ color: 0xdb8e22 });
+    const pitchMarker = new THREE.Mesh(pitchMarkerGeom, pitchMarkerMat);
+    pitchMarker.position.set(pitchRadius - ribbonWidth/2, 0, 0);
     pitchRing.add(pitchMarker);
     
     // ============================================================
-    // ROLL GIMBAL (INNER) - Green ring, vertical in YZ plane
-    // Rotates around X-axis (longitudinal/forward axis - barrel roll motion)
-    // This ring inherits both yaw and pitch rotations
+    // ROLL GIMBAL (INNER) - Green ribbon, vertical in YZ plane
     // ============================================================
     const rollRadius = 1.4;
-    const rollGeom = new THREE.TorusGeometry(rollRadius, tubeRadius, 16, 100);
-    const rollMat = new THREE.MeshPhongMaterial({ color: 0x2c9f2c });
-    rollRing = new THREE.Mesh(rollGeom, rollMat);
-    // Rotate ring 90° around Y to lie in YZ plane (perpendicular to X/forward)
+    rollRing = createRibbonRing(rollRadius, 0x2c9f2c);
+    // Rotate 90° around Y to lie in YZ plane
     rollRing.rotation.y = Math.PI / 2;
     rollGroup.add(rollRing);
     
-    // Add marker for roll direction (on +Y side = up)
-    const rollMarkerGeom = new THREE.SphereGeometry(tubeRadius * 2.5, 8, 8);
-    const rollMarker = new THREE.Mesh(rollMarkerGeom, rollMat);
-    rollMarker.position.set(rollRadius, 0, 0);
+    // Roll marker
+    const rollMarkerGeom = new THREE.BoxGeometry(0.15, 0.08, 0.04);
+    const rollMarkerMat = new THREE.MeshPhongMaterial({ color: 0x2c9f2c });
+    const rollMarker = new THREE.Mesh(rollMarkerGeom, rollMarkerMat);
+    rollMarker.position.set(rollRadius - ribbonWidth/2, 0, 0);
     rollRing.add(rollMarker);
+    
+    // ============================================================
+    // GREEN RAY: Semi-transparent connection from Z-axis to roll gimbal
+    // Connects the green Z-axis arrow (pointing down at -Y) to the green roll ring
+    // ============================================================
+    const rayLength = rollRadius - 0.6;  // From axis end to ring
+    const rayGeom = new THREE.PlaneGeometry(0.08, rayLength);
+    const rayMat = new THREE.MeshBasicMaterial({
+        color: 0x2c9f2c,
+        transparent: true,
+        opacity: 0.3,
+        side: THREE.DoubleSide,
+        depthWrite: false
+    });
+    const greenRay = new THREE.Mesh(rayGeom, rayMat);
+    // Position ray between Z-axis tip and roll ring
+    greenRay.position.set(0, -(0.6 + rayLength/2), 0);
+    rollGroup.add(greenRay);
 }
 
 function createAirplane() {
