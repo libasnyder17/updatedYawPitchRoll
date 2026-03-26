@@ -308,19 +308,22 @@ function createGimbals() {
     // ============================================================
     // GREEN RAY: Semi-transparent connection from Z-axis to roll gimbal
     // Connects the green Z-axis arrow (pointing down at -Y) to the green roll ring
+    // Updated for longer axes (1.6 length)
     // ============================================================
-    const rayLength = rollRadius - 0.6;  // From axis end to ring
-    const rayGeom = new THREE.PlaneGeometry(0.08, rayLength);
+    const axisEndY = -1.7;  // Where Z-axis arrow tip is (axis length + arrow)
+    const ringY = -rollRadius;  // Bottom of roll ring
+    const rayLength = Math.abs(ringY - axisEndY);
+    const rayGeom = new THREE.PlaneGeometry(0.1, rayLength);
     const rayMat = new THREE.MeshBasicMaterial({
-        color: 0x2c9f2c,
+        color: 0x00ff00,
         transparent: true,
-        opacity: 0.3,
+        opacity: 0.25,
         side: THREE.DoubleSide,
         depthWrite: false
     });
     const greenRay = new THREE.Mesh(rayGeom, rayMat);
-    // Position ray between Z-axis tip and roll ring
-    greenRay.position.set(0, -(0.6 + rayLength/2), 0);
+    // Position ray between Z-axis tip and roll ring bottom
+    greenRay.position.set(0, (axisEndY + ringY) / 2, 0);
     rollGroup.add(greenRay);
 }
 
@@ -419,12 +422,13 @@ function createAirplane() {
 function createAxes() {
     axesGroup = new THREE.Group();
     
-    const axisLength = 0.8;
-    const axisRadius = 0.03;
+    const axisLength = 1.6;    // Longer axes to extend past the plane
+    const axisRadius = 0.05;   // Thicker for visibility
     
     // ============================================================
     // BODY-FIXED AXES for 3-2-1 Euler angles (aerospace NED-like)
     // These axes rotate with the airplane body
+    // Made prominent with emissive glow for visibility
     //
     // Convention:
     //   X (Red): Forward (out the nose) - Roll axis
@@ -434,49 +438,61 @@ function createAxes() {
     
     // X-axis (Red) - Forward/longitudinal - Roll axis
     // Points along the nose direction (+X in Three.js)
-    const xGeom = new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 8);
-    const xMat = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+    const xGeom = new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 12);
+    const xMat = new THREE.MeshPhongMaterial({ 
+        color: 0xff0000, 
+        emissive: 0xff0000, 
+        emissiveIntensity: 0.4 
+    });
     const xAxis = new THREE.Mesh(xGeom, xMat);
     xAxis.rotation.z = -Math.PI / 2;
     xAxis.position.x = axisLength / 2;
     axesGroup.add(xAxis);
     
     // X arrow head
-    const xArrowGeom = new THREE.ConeGeometry(axisRadius * 2, axisRadius * 4, 8);
+    const xArrowGeom = new THREE.ConeGeometry(axisRadius * 2.5, axisRadius * 6, 12);
     const xArrow = new THREE.Mesh(xArrowGeom, xMat);
     xArrow.rotation.z = -Math.PI / 2;
-    xArrow.position.x = axisLength;
+    xArrow.position.x = axisLength + axisRadius * 2;
     axesGroup.add(xArrow);
     
     // Y-axis (Blue) - Lateral/right - Pitch axis
     // Points along the right wing direction (+Z in Three.js)
-    const yGeom = new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 8);
-    const yMat = new THREE.MeshPhongMaterial({ color: 0x0000ff });
+    const yGeom = new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 12);
+    const yMat = new THREE.MeshPhongMaterial({ 
+        color: 0x0066ff, 
+        emissive: 0x0066ff, 
+        emissiveIntensity: 0.4 
+    });
     const yAxis = new THREE.Mesh(yGeom, yMat);
     yAxis.rotation.x = Math.PI / 2;
     yAxis.position.z = axisLength / 2;
     axesGroup.add(yAxis);
     
     // Y arrow head (pointing along +Z = starboard wing)
-    const yArrowGeom = new THREE.ConeGeometry(axisRadius * 2, axisRadius * 4, 8);
+    const yArrowGeom = new THREE.ConeGeometry(axisRadius * 2.5, axisRadius * 6, 12);
     const yArrow = new THREE.Mesh(yArrowGeom, yMat);
     yArrow.rotation.x = Math.PI / 2;
-    yArrow.position.z = axisLength;
+    yArrow.position.z = axisLength + axisRadius * 2;
     axesGroup.add(yArrow);
     
     // Z-axis (Green) - Down/vertical - Yaw axis
     // Points down from the body (-Y in Three.js)
-    const zGeom = new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 8);
-    const zMat = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+    const zGeom = new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 12);
+    const zMat = new THREE.MeshPhongMaterial({ 
+        color: 0x00ff00, 
+        emissive: 0x00ff00, 
+        emissiveIntensity: 0.4 
+    });
     const zAxis = new THREE.Mesh(zGeom, zMat);
     zAxis.position.y = -axisLength / 2;
     axesGroup.add(zAxis);
     
     // Z arrow head (pointing DOWN)
-    const zArrowGeom = new THREE.ConeGeometry(axisRadius * 2, axisRadius * 4, 8);
+    const zArrowGeom = new THREE.ConeGeometry(axisRadius * 2.5, axisRadius * 6, 12);
     const zArrow = new THREE.Mesh(zArrowGeom, zMat);
     zArrow.rotation.x = Math.PI;  // Flip to point down
-    zArrow.position.y = -axisLength;
+    zArrow.position.y = -axisLength - axisRadius * 2;
     axesGroup.add(zArrow);
 }
 
