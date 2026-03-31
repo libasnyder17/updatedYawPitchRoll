@@ -21,9 +21,8 @@
 //      → INNER ring (green) rotates
 //
 // Body Axes Colors:
-//   - X (Red): Forward - Roll axis
-//   - Y (Blue): Right - Pitch axis
-//   - Z (Green): Down - Yaw axis
+//   All axes are GREEN to show they're one unified body frame
+//   (avoids implying any connection between axis and gimbal colors)
 //
 // Scene Hierarchy:
 //   scene → yawGroup → pitchGroup → rollGroup → airplane
@@ -386,8 +385,8 @@ function createGimbals() {
     rollGroup.add(rollCapBack);
     
     // ============================================================
-    // GREEN RAY: Semi-transparent connection from Z-axis to roll gimbal
-    // Connects the green Z-axis arrow (pointing down at -Y) to the green roll ring
+    // RAY: Semi-transparent connection from Z-axis to roll gimbal
+    // Connects the Z-axis arrow (pointing down at -Y) to the roll ring
     // Updated for longer axes (1.6 length)
     // ============================================================
     const axisEndY = -1.7;  // Where Z-axis arrow tip is (axis length + arrow)
@@ -401,10 +400,10 @@ function createGimbals() {
         side: THREE.DoubleSide,
         depthWrite: false
     });
-    const greenRay = new THREE.Mesh(rayGeom, rayMat);
+    const axisRay = new THREE.Mesh(rayGeom, rayMat);
     // Position ray between Z-axis tip and roll ring bottom
-    greenRay.position.set(0, (axisEndY + ringY) / 2, 0);
-    rollGroup.add(greenRay);
+    axisRay.position.set(0, (axisEndY + ringY) / 2, 0);
+    rollGroup.add(axisRay);
 }
 
 function createAirplane() {
@@ -509,19 +508,21 @@ function createAxes() {
     // BODY-FIXED AXES for 3-2-1 Euler angles (aerospace NED-like)
     // These axes rotate with the airplane body
     // Made prominent with emissive glow for visibility
+    // All axes are GREEN to show they move as one unified body frame
+    // (avoids implying any connection between axis and gimbal colors)
     //
     // Convention:
-    //   X (Red): Forward (out the nose) - Roll axis
-    //   Y (Blue): Right (out starboard wing) - Pitch axis  
-    //   Z (Green): Down (out the belly) - Yaw axis
+    //   X: Forward (out the nose) - Roll axis
+    //   Y: Right (out starboard wing) - Pitch axis  
+    //   Z: Down (out the belly) - Yaw axis
     // ============================================================
     
-    // X-axis (Red) - Forward/longitudinal - Roll axis
+    // X-axis (Green) - Forward/longitudinal - Roll axis
     // Points along the nose direction (+X in Three.js)
     const xGeom = new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 12);
     const xMat = new THREE.MeshPhongMaterial({ 
-        color: 0xff0000, 
-        emissive: 0xff0000, 
+        color: 0x00ff00, 
+        emissive: 0x00ff00, 
         emissiveIntensity: 0.4 
     });
     const xAxis = new THREE.Mesh(xGeom, xMat);
@@ -536,12 +537,12 @@ function createAxes() {
     xArrow.position.x = axisLength + axisRadius * 2;
     axesGroup.add(xArrow);
     
-    // Y-axis (Blue) - Lateral/right - Pitch axis
+    // Y-axis (Green) - Lateral/right - Pitch axis
     // Points along the right wing direction (+Z in Three.js)
     const yGeom = new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 12);
     const yMat = new THREE.MeshPhongMaterial({ 
-        color: 0x0066ff, 
-        emissive: 0x0066ff, 
+        color: 0x00ff00, 
+        emissive: 0x00ff00, 
         emissiveIntensity: 0.4 
     });
     const yAxis = new THREE.Mesh(yGeom, yMat);
