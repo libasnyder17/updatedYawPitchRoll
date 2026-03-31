@@ -14,11 +14,11 @@
 //
 //   2. Pitch (θ): Rotate about LATERAL axis (Three.js Z, after yaw)
 //      → Nose up/down motion
-//      → MIDDLE ring (orange) rotates
+//      → MIDDLE ring (green) rotates
 //
 //   3. Roll (φ): Rotate about FORWARD axis (Three.js X, after yaw+pitch)
 //      → Wings tilt (barrel roll)
-//      → INNER ring (green) rotates
+//      → INNER ring (red) rotates
 //
 // Body Axes Colors:
 //   All axes are GREEN to show they're one unified body frame
@@ -322,17 +322,17 @@ function createGimbals() {
     scene.add(yawShaft);
     
     // ============================================================
-    // PITCH GIMBAL (MIDDLE) - Orange ribbon, vertical in XY plane
+    // PITCH GIMBAL (MIDDLE) - Green ribbon, vertical in XY plane
     // Rotation about lateral Z axis (nose up/down)
     // ============================================================
     const pitchRadius = 1.7;
-    pitchRing = createRibbonRing(pitchRadius, 0xdb8e22);
+    pitchRing = createRibbonRing(pitchRadius, 0x2c9f2c);
     // Already in XY plane by default
     pitchGroup.add(pitchRing);
     
     // Pitch marker
     const pitchMarkerGeom = new THREE.BoxGeometry(0.15, 0.08, 0.04);
-    const pitchMarkerMat = new THREE.MeshPhongMaterial({ color: 0xdb8e22 });
+    const pitchMarkerMat = new THREE.MeshPhongMaterial({ color: 0x2c9f2c });
     const pitchMarker = new THREE.Mesh(pitchMarkerGeom, pitchMarkerMat);
     pitchMarker.position.set(pitchRadius - ribbonWidth/2, 0, 0);
     pitchRing.add(pitchMarker);
@@ -353,18 +353,18 @@ function createGimbals() {
     pitchGroup.add(pitchCapRight);
     
     // ============================================================
-    // ROLL GIMBAL (INNER) - Green ribbon, vertical in YZ plane
+    // ROLL GIMBAL (INNER) - Red ribbon, vertical in YZ plane
     // Rotation about forward X axis (barrel roll)
     // ============================================================
     const rollRadius = 1.4;
-    rollRing = createRibbonRing(rollRadius, 0x2c9f2c);
+    rollRing = createRibbonRing(rollRadius, 0xff5050);
     // Rotate 90° around Y to lie in YZ plane
     rollRing.rotation.y = Math.PI / 2;
     rollGroup.add(rollRing);
     
     // Roll marker
     const rollMarkerGeom = new THREE.BoxGeometry(0.15, 0.08, 0.04);
-    const rollMarkerMat = new THREE.MeshPhongMaterial({ color: 0x2c9f2c });
+    const rollMarkerMat = new THREE.MeshPhongMaterial({ color: 0xff5050 });
     const rollMarker = new THREE.Mesh(rollMarkerGeom, rollMarkerMat);
     rollMarker.position.set(rollRadius - ribbonWidth/2, 0, 0);
     rollRing.add(rollMarker);

@@ -67,16 +67,16 @@ p {
     padding: 5px 10px;
 }
 
-/* Pitch - Orange */
+/* Pitch - Green */
 .pitch-label {
-    color: rgb(219, 142, 34);
+    color: rgb(44, 159, 44);
     background-color: #000;
     padding: 5px 10px;
 }
 
-/* Roll - Green */
+/* Roll - Red */
 .roll-label {
-    color: rgb(44, 159, 44);
+    color: rgb(255, 80, 80);
     background-color: #000;
     padding: 5px 10px;
 }
@@ -112,6 +112,21 @@ td.col2 {
 td.col3 {
     width: 50px;
     color: #0000FF;
+}
+
+/* T1(φ) Roll matrix entries - Red */
+#cphi1, #cphi2, #sphipos, #sphineg {
+    color: rgb(255, 80, 80);
+}
+
+/* T2(θ) Pitch matrix entries - Green */
+#ctheta1, #ctheta2, #sthetapos, #sthetaneg {
+    color: rgb(44, 159, 44);
+}
+
+/* T3(ψ) Yaw matrix entries - Blue */
+#cpsi1, #cpsi2, #spsipos, #spsineg {
+    color: rgb(47, 123, 174);
 }
 
 .matrix-layout {
