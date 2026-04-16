@@ -20,9 +20,10 @@
 //      → Wings tilt (barrel roll)
 //      → INNER ring (red) rotates
 //
-// Body Axes Colors:
-//   All axes are GREEN to show they're one unified body frame
-//   (avoids implying any connection between axis and gimbal colors)
+// Body Axes Colors (RGB matching gimbal ring convention):
+//   b̂₁ (X-axis) arrow → Red (matches roll φ, red gimbal ring, row 1 of [BN])
+//   b̂₂ (Y-axis) arrow → Green (matches pitch θ, green gimbal ring, row 2 of [BN])
+//   b̂₃ (Z-axis) arrow → Blue (matches yaw ψ, blue gimbal ring, row 3 of [BN])
 //
 // Scene Hierarchy:
 //   scene → yawGroup → pitchGroup → rollGroup → airplane
@@ -508,8 +509,10 @@ function createAxes() {
     // BODY-FIXED AXES for 3-2-1 Euler angles (aerospace NED-like)
     // These axes rotate with the airplane body
     // Made prominent with emissive glow for visibility
-    // All axes are GREEN to show they move as one unified body frame
-    // (avoids implying any connection between axis and gimbal colors)
+    // RGB colors match gimbal ring convention:
+    //   b̂₁ (X) = Red  = Roll  = Row 1 of [BN]
+    //   b̂₂ (Y) = Green = Pitch = Row 2 of [BN]
+    //   b̂₃ (Z) = Blue  = Yaw   = Row 3 of [BN]
     //
     // Convention:
     //   X: Forward (out the nose) - Roll axis
@@ -517,12 +520,13 @@ function createAxes() {
     //   Z: Down (out the belly) - Yaw axis
     // ============================================================
     
-    // X-axis (Green) - Forward/longitudinal - Roll axis
+    // X-axis (Red) - Forward/longitudinal - Roll axis (b̂₁)
     // Points along the nose direction (+X in Three.js)
+    // Red matches roll φ, red gimbal ring, row 1 of [BN]
     const xGeom = new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 12);
     const xMat = new THREE.MeshPhongMaterial({ 
-        color: 0x00ff00, 
-        emissive: 0x00ff00, 
+        color: 0xff0000, 
+        emissive: 0xff0000, 
         emissiveIntensity: 0.4 
     });
     const xAxis = new THREE.Mesh(xGeom, xMat);
@@ -537,8 +541,9 @@ function createAxes() {
     xArrow.position.x = axisLength + axisRadius * 2;
     axesGroup.add(xArrow);
     
-    // Y-axis (Green) - Lateral/right - Pitch axis
+    // Y-axis (Green) - Lateral/right - Pitch axis (b̂₂)
     // Points along the right wing direction (+Z in Three.js)
+    // Green matches pitch θ, green gimbal ring, row 2 of [BN]
     const yGeom = new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 12);
     const yMat = new THREE.MeshPhongMaterial({ 
         color: 0x00ff00, 
@@ -557,12 +562,13 @@ function createAxes() {
     yArrow.position.z = axisLength + axisRadius * 2;
     axesGroup.add(yArrow);
     
-    // Z-axis (Green) - Down/vertical - Yaw axis
+    // Z-axis (Blue) - Down/vertical - Yaw axis (b̂₃)
     // Points down from the body (-Y in Three.js)
+    // Blue matches yaw ψ, blue gimbal ring, row 3 of [BN]
     const zGeom = new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 12);
     const zMat = new THREE.MeshPhongMaterial({ 
-        color: 0x00ff00, 
-        emissive: 0x00ff00, 
+        color: 0x0000ff, 
+        emissive: 0x0000ff, 
         emissiveIntensity: 0.4 
     });
     const zAxis = new THREE.Mesh(zGeom, zMat);

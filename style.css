@@ -98,7 +98,7 @@ td.matrix {
     width: 50px;
 }
 
-/* Column colors for combined rotation matrix */
+/* Column colors for combined rotation matrix (legacy, kept for reference) */
 td.col1 {
     width: 50px;
     color: #FF0000;
@@ -110,6 +110,25 @@ td.col2 {
 }
 
 td.col3 {
+    width: 50px;
+    color: #0000FF;
+}
+
+/* Row colors for [BN] matrix - match body axes and gimbal colors */
+/* Row 1 (b̂₁, X-axis) → Red (matches roll φ, red gimbal ring) */
+td.row1 {
+    width: 50px;
+    color: #FF0000;
+}
+
+/* Row 2 (b̂₂, Y-axis) → Green (matches pitch θ, green gimbal ring) */
+td.row2 {
+    width: 50px;
+    color: #00b500;
+}
+
+/* Row 3 (b̂₃, Z-axis) → Blue (matches yaw ψ, blue gimbal ring) */
+td.row3 {
     width: 50px;
     color: #0000FF;
 }
